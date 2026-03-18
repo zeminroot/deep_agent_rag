@@ -284,9 +284,7 @@ class DocumentProcessTask:
 
     async def execute(self, limit: int = 1000):
         """
-        主要任务函数：处理未读取的文件
-
-        工作流程：
+        处理mysql中未被读取的文件
         1、获取Redis分布式锁
         2、读取MySQL中isread=false的文件
         3、先将isread置为true（防止其他实例重复读取）
