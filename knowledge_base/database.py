@@ -90,6 +90,7 @@ class TextPageRepository:
     async def save_pages(
         file_id: int,
         file_url: str,
+        file_total_pages: int,
         pages: List[Dict[str, Any]]
     ) -> List[int]:
         """
@@ -111,7 +112,8 @@ class TextPageRepository:
                         page_content=page_data.get('text', ''),
                         page_index=page_data.get('page_index', 0),
                         file_id=file_id,
-                        file_url=file_url
+                        file_url=file_url,
+                        file_total_pages=file_total_pages
                     )
                     session.add(text_page)
                     await session.flush()  # 获取主键ID
@@ -180,6 +182,7 @@ class TextChunkRepository:
     @staticmethod
     async def save_chunks_for_page(
         page_id: int,
+        file_id: int,
         chunks: List[Dict[str, Any]]
     ) -> List[int]:
         """
@@ -187,6 +190,7 @@ class TextChunkRepository:
 
         Args:
             page_id: 页面ID
+            file_id: 文件ID
             chunks: 文本块列表，每个元素包含 text, chunk_index 等信息
 
         Returns:
@@ -199,6 +203,7 @@ class TextChunkRepository:
                     text_chunk = TextChunk(
                         chunk_content=chunk_data.get('text', ''),
                         chunk_index=chunk_data.get('chunk_index', 0),
+                        file_id=file_id,
                         page_id=page_id
                     )
                     session.add(text_chunk)
@@ -251,24 +256,52 @@ class TextChunkRepository:
         """
         async with AsyncSessionLocal() as session:
             try:
-                # 获取该文件的所有页面
                 stmt = (
-                    select(TextPage)
-                    .where(TextPage.file_id == file_id)
-                    .order_by(TextPage.page_index.asc())
+                    select(TextChunk)
+                    .where(TextChunk.file_id == file_id)
+                    .order_by(TextChunk.chunk_index.asc())
                 )
                 result = await session.execute(stmt)
-                pages = result.scalars().all()
-
-                # 获取所有页面的文本块
-                all_chunks = []
-                for page in pages:
-                    chunks = await TextChunkRepository.get_chunks_by_page_id(page.id)
-                    all_chunks.extend(chunks)
-
-                return all_chunks
+                chunks = result.scalars().all()
+                return chunks
             except Exception as e:
                 logger.error(f"查询文件文本块失败: {e}")
+                return []
+
+    @staticmethod
+    async def get_chunks_by_file_id_and_indices(
+        file_id: int,
+        chunk_indices: List[int]
+    ) -> List[TextChunk]:
+        """
+        根据文件ID和文本块索引列表批量获取文本块
+
+        Args:
+            file_id: 文件ID
+            chunk_indices: 文本块索引列表
+
+        Returns:
+            匹配的文本块列表
+        """
+        if not chunk_indices:
+            return []
+
+        async with AsyncSessionLocal() as session:
+            try:
+                stmt = (
+                    select(TextChunk)
+                    .where(
+                        and_(
+                            TextChunk.file_id == file_id,
+                            TextChunk.chunk_index.in_(chunk_indices)
+                        )
+                    )
+                )
+                result = await session.execute(stmt)
+                chunks = result.scalars().all()
+                return chunks
+            except Exception as e:
+                logger.error(f"根据文件ID和索引查询文本块失败: {e}")
                 return []
 
     @staticmethod
