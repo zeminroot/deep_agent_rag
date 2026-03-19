@@ -17,8 +17,8 @@ from loguru import logger
 from openai import AsyncOpenAI
 import json
 from loguru import logger
-from tool_manager import ToolManager
-import ai_tools
+from knowledge_retrieval.tool_manager import ToolManager
+from knowledge_retrieval import ai_tools
 from typing import Optional, Dict, List, Any
 
 
@@ -53,16 +53,21 @@ class DeepAgentRag:
         """
         return await self.tool_manager.get_openai_tools()
 
-    async def _execute_tools(self, tool_calls: List[Dict]) -> List[Dict]:
+    async def _execute_tools(self, tool_calls: List[Dict], request_id: str = None) -> List[Dict]:
         """
         批量执行多个工具调用
         """
         tool_results = []
         for call in tool_calls:
             try:
+                tool_args = call["arguments"]
+                # 传递 request_id 到工具参数
+                if request_id:
+                    tool_args["request_id"] = request_id
+
                 result = await self.tool_manager.execute_tool(
                     tool_name=call["name"],
-                    tool_args=call["arguments"]
+                    tool_args=tool_args
                 )
                 # 构造工具结果
                 tool_results.append({
@@ -104,7 +109,7 @@ class DeepAgentRag:
                 logger.error(f"工具参数解析失败：{tool_call.function.arguments}")
         return parsed_calls if parsed_calls else None
 
-    async def _process_single_query(self, query: str) -> str:
+    async def _process_single_query(self, query: str, request_id: str = None) -> str:
         """
         处理单个query，循环调用工具，直到返回答案/超过10轮
         """
@@ -141,41 +146,47 @@ class DeepAgentRag:
 
             # 有工具调用，执行工具并追加上下文
             messages.append(assistant_msg)
-            tool_results = await self._execute_tools(tool_calls)
+            tool_results = await self._execute_tools(tool_calls, request_id)
             messages.extend(tool_results)
 
         logger.warning(f"查询【{query}】超过{self.MAX_TOOL_STEPS}轮，强制结束")
-        return "默认答案"
+        return "请基于你自身知识回答。"
 
-    async def run_batch(self, query_list: List[str]) -> List[str]:
+    async def run_batch(self, query_list: List[str], request_id: str = None) -> List[str]:
         """
         批量处理多个query
         返回答案列表，顺序一一对应
+
+        Args:
+            query_list: 查询列表
+            request_id: 请求ID，用于追踪检索元数据
         """
         if not query_list:
             logger.warning("query_list 为空")
             return []
 
-        logger.info(f"开始批量处理 {len(query_list)} 个查询")
+        logger.info(f"开始批量处理 {len(query_list)} 个查询，request_id: {request_id}")
+
         answer_list = []
 
         for idx, query in enumerate(query_list):
             logger.info(f"\n--- 处理第 {idx+1} 个问题：{query} ---")
-            answer = await self._process_single_query(query)
+            answer = await self._process_single_query(query, request_id)
             logger.info(f"\n得到答案：{answer}")
 
             answer_list.append(answer)
 
         logger.success("批量处理完成！")
         return answer_list
-    
-    
+
+
 if __name__ == "__main__":
     import asyncio
 
     async def test():
         agent = DeepAgentRag()
-        await agent.run_batch(["中美欧日哪个国家全球GDP份额占比最多，分别是多少？", "什么是特里芬难题"])
+        
+        await agent.run_batch(query_list=["什么是特里芬难题"], request_id="1111")
         
     asyncio.run(test())
     
