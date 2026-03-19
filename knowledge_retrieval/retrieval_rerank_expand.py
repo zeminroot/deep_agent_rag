@@ -355,3 +355,7 @@ if __name__ == "__main__":
             print(f"\n文件ID: {result['file_id']}, 页面ID: {result['page_id']}, 页面index: {result['page_index']}, 文本块索引: {result['chunk_index']}")
 
     asyncio.run(test_retrieval_rerank_expand())
+    
+    
+    
+    

@@ -90,7 +90,7 @@ class PageContentSearch:
                 
                 p_content_list = []
                 for p_info in target_pages_info:
-                    p_content_list.append(f"--- 第 {p_info['page_index']} 页 (page_id:{p_info['page_id']})---\n{p_info['page_content']}")
+                    p_content_list.append(f"--- 第 {p_info['page_index']} 页 (page_index:{p_info['page_index']})---\n{p_info['page_content']}")
                 pages_content = "\n".join(p_content_list)
             else:
                 pages_content = "未获取到对应页面内容"

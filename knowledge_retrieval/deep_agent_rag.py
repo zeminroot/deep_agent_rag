@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-@File    :   deep_agent_rag_v2.py
+@File    :   deep_agent_rag.py
 @Author  :   zemin
 @Desc    :   让模型像人类研究员一样主动翻页查找文档资料，react、deepsearch模式
 '''
@@ -23,7 +23,7 @@ from typing import Optional, Dict, List, Any
 
 
 
-class Agent:
+class DeepAgentRag:
     def __init__(self):
         self.settings = get_settings()
         self.openai_client = AsyncOpenAI(
@@ -33,6 +33,7 @@ class Agent:
         self.model = self.settings.llm_model
         self.MAX_TOOL_STEPS = 10
         self.tool_manager = ToolManager()
+        self.system_prompt = ai_tools.load_system_prompt()
         self._register_all_tools()
 
     def _register_all_tools(self):
@@ -107,7 +108,10 @@ class Agent:
         """
         处理单个query，循环调用工具，直到返回答案/超过10轮
         """
-        messages = [{"role": "user", "content": query}]
+        messages = [
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": query}
+        ]
         step = 0
 
         while step < self.MAX_TOOL_STEPS:
@@ -170,9 +174,12 @@ if __name__ == "__main__":
     import asyncio
 
     async def test():
-        agent = Agent()
-        await agent.run_batch(["今天北京天气怎么样", "帮我算一下7+5+999等于几,然后回答一下今天北京天气怎么样"])
+        agent = DeepAgentRag()
+        await agent.run_batch(["中美欧日哪个国家全球GDP份额占比最多，分别是多少？", "什么是特里芬难题"])
         
     asyncio.run(test())
+    
+    
+
         
     
