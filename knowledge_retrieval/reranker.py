@@ -14,6 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from typing import List, Dict, Any, Optional
 from modelscope import AutoModel
+from config.config import get_settings
 from loguru import logger
 
 
@@ -22,8 +23,9 @@ class Reranker:
         """
         初始化 Reranker 模型
         """
+        self.settings = get_settings()
         self.device = device
-        self.model = None
+        self.model = self.settings.rerank_model
         self._load_model()
 
     def _load_model(self):
@@ -31,9 +33,9 @@ class Reranker:
         加载 Reranker模型
         """
         try:
-            logger.info("正在加载 Reranker 模型 jinaai/jina-reranker-v3...")
+            logger.info(f"正在加载 Reranker 模型 {self.model}...")
             self.model = AutoModel.from_pretrained(
-                'jinaai/jina-reranker-v3',
+                pretrained_model_name_or_path=self.model,
                 dtype="auto",
                 trust_remote_code=True,
                 device_map=self.device

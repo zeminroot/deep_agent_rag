@@ -65,14 +65,20 @@ class Settings(BaseSettings):
     llm_max_tokens: int = 10240
 
     # 文档解析API配置
-    paddleocr_api_url: str
-    paddleocr_api_token: str
+    vl_rec_server_url: str = "http://127.0.0.1:8118/v1"
+    vl_rec_max_concurrency: int = 5
+    use_layout_detection: bool = True
+    use_doc_orientation_classify: bool = False
+    use_doc_unwarping: bool = False
+    use_chart_recognition: bool = True
+    format_block_content: bool = True
 
     # 检索排序模型配置
     embedding_model: str = "BAAI/bge-m3"
     embedding_device: str = "cpu"
     rerank_model: str = "jinaai/jina-reranker-v3"
     rerank_device: str = "cpu"
+    jina_api_key: str = ""  
 
     # 检索配置
     vector_top_k: int = 10
@@ -81,7 +87,7 @@ class Settings(BaseSettings):
 
     # 分布式锁配置
     lock_key_prefix: str = "rag:lock:"
-    lock_expire_time: int = 300  # 锁过期时间（秒）
+    lock_expire_time: int = 10  # 锁过期时间（秒）
 
     # 对话记忆配置
     dialogue_memory_window_size: int = 10
@@ -89,6 +95,9 @@ class Settings(BaseSettings):
 
     # 定时任务配置
     db_scan_interval: int = 1
+    
+    # 是否使用deep_agent检索
+    use_deep_agent_search: int = 1
 
     @property
     def max_upload_size(self) -> int:

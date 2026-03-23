@@ -1,0 +1,19 @@
+file_dir/*
+test/*
+.vscode/
+.DS_Store
+**/*_explain.py
+*_explain.py
+**/*_explain.*
+*_explain.*
+__pycache__/
+*.log
+
+*.claude
+# 模型缓存目录
+models/
+# 输出目录
+output*
+output*/
+# 环境配置文件
+.env

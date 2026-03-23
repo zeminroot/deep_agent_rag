@@ -6,14 +6,13 @@
 @Desc    :   基于一次重排序结果，对文本chunk分别向上下扩展文本块
 '''
 
-
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from typing import List, Dict, Any, Optional
 from loguru import logger
 from knowledge_retrieval.retrieval_rerank import get_retrieval_rerank
-from knowledge_base.database import TextChunkRepository
+from knowledge_base.database_sync import TextChunkRepositorySync as TextChunkRepository
 from config.config import get_settings
 from knowledge_base.es_vector_store import ESVectorStore
 from knowledge_retrieval.reranker import Reranker
@@ -28,9 +27,9 @@ class RetrievalRerankExpand:
         rerank_top_n: int = 10
     ):
         """
-        overlap_threshold: 文本去重阈值，默认50个字符
-        vector_top_k: 向量检索返回的文档数量，默认20
-        rerank_top_n: 重排序后返回的文档数量，默认10
+        overlap_threshold: 文本去重阈值
+        vector_top_k: 向量检索返回的文档数量
+        rerank_top_n: 重排序后返回的文档数量
         """
         self.retrieval_rerank = get_retrieval_rerank()
         self.overlap_threshold = overlap_threshold
@@ -53,63 +52,6 @@ class RetrievalRerankExpand:
         )
         self.reranker = Reranker(device=settings.rerank_device)
 
-
-    async def retrieve_with_expand(
-        self,
-        query: str,
-        top_n: Optional[int] = 10
-    ) -> List[Dict[str, Any]]:
-        """
-        检索并对文本块进行上下文扩展
-
-        Args:
-            query: 查询文本
-            top_n: 返回的文档数量
-
-        Returns:
-            扩展后的文档列表，每项包含：
-            - chunk_content: 扩展后的文档内容
-            - chunk_index: 原始文本块在页面中的索引
-            - page_id: 页面ID
-            - file_id: 文件ID
-            - relevance_score: 相关性分数
-            - is_expanded: 是否进行了扩展
-        """
-        try:
-            # 1、获取基础检索结果
-            logger.info(f"开始检索并扩展，query: {query[:50]}...")
-            base_results = self.retrieval_rerank.retrieve(query, top_n=top_n)
-
-            logger.info(f"基础检索+重排序返回 {len(base_results)} 个结果，开始上下文扩展")
-
-            # 2、对每个结果进行上下文扩展
-            expanded_results = []
-            for result in base_results:
-                file_id = result.get('file_id')
-                chunk_index = result.get('chunk_index')
-
-                if file_id is None:
-                    # 没有 file_id，直接使用原结果
-                    expanded_results.append(result)
-                    continue
-
-                # 获取同一文件下的相邻文本块
-                adjacent_chunks = await self._get_adjacent_chunks(file_id, chunk_index)
-                adjacent_chunks.append({"chunk_content":result["chunk_content"], "chunk_index":chunk_index})
-
-                expanded_content = self._merge_chunks_with_deduplication(adjacent_chunks)
-                result['chunk_content'] = expanded_content
-                logger.debug(f"文本块 {chunk_index} 已扩展。")
-
-                expanded_results.append(result)
-
-            logger.info(f"上下文扩展完成，返回 {len(expanded_results)} 个结果")
-
-            return expanded_results
-
-        except Exception as e:
-            logger.error(f"检索召回重排扩展失败: {e}")
-            raise
 
     async def retrieve_expand_rerank(
         self,
@@ -231,14 +173,8 @@ class RetrievalRerankExpand:
         chunk_index: int
     ) -> List[Dict[str, Any]]:
         """
-        获取某个文件下指定文本块的相邻文本块
-
-        Args:
-            file_id: 文件ID
-            chunk_index: 文本块索引
-
-        Returns:
-            相邻文本块列表
+        获取某个文件下指定文本块的相邻文本块。file_id: 文件ID。chunk_index: 文本块索引
+        返回相邻文本块列表
             [{
                 'chunk_content': chunk.chunk_content,
                 'chunk_index': chunk.chunk_index
@@ -252,7 +188,7 @@ class RetrievalRerankExpand:
             adjacent_indices.append(chunk_index + 1)
 
             # 批量查询相邻文本块
-            adjacent_chunks_db = await TextChunkRepository.get_chunks_by_file_id_and_indices(
+            adjacent_chunks_db = TextChunkRepository.get_chunks_by_file_id_and_indices(
                 file_id=file_id,
                 chunk_indices=adjacent_indices
             )
@@ -348,11 +284,6 @@ if __name__ == "__main__":
         results = await retriever.retrieve_expand_rerank(query)
 
         print(f"=== 检索扩展结果（共{len(results)}条）===")
-        for i, result in enumerate(results, 1):
-            print(f"\n[{i}] 相关度: {result['relevance_score']:.4f}")
-            print(f"内容长度: {len(result['chunk_content'])} 字符")
-            print(f"内容: \n{result['chunk_content'][:200]}...")
-            print(f"\n文件ID: {result['file_id']}, 页面ID: {result['page_id']}, 页面index: {result['page_index']}, 文本块索引: {result['chunk_index']}")
 
     asyncio.run(test_retrieval_rerank_expand())
     

@@ -1,5 +1,3 @@
-
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
@@ -9,10 +7,8 @@
 '''
 import os
 import sys
-from typing import List, Dict, Any, Optional
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+from typing import List, Dict, Any, Optional
 from loguru import logger
 from functools import lru_cache
 from config.config import get_settings
@@ -61,14 +57,8 @@ class RetrievalRerank:
         top_n: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
-        检索并重排序文档
-
-        Args:
-            query: 查询文本
-            top_n: 返回的文档数量
-
-        Returns:
-            重排序后的文档列表，每项包含：chunk在es中的全部信息+relevance_score: 相关性分数
+        检索并重排序文档。query: 查询文本。top_n: 返回的文档数量
+        返回重排序后的文档列表，每项包含：chunk在es中的全部信息+relevance_score: 相关性分数
         """
 
         top_n = top_n or self.rerank_top_n

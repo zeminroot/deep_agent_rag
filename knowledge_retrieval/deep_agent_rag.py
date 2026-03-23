@@ -3,7 +3,7 @@
 '''
 @File    :   deep_agent_rag.py
 @Author  :   zemin
-@Desc    :   让模型像人类研究员一样主动翻页查找文档资料，react、deepsearch模式
+@Desc    :   让模型像人类研究员一样主动翻页查找文档资料，react+deepsearch模式
 '''
 
 import os
@@ -17,10 +17,11 @@ from loguru import logger
 from openai import AsyncOpenAI
 import json
 from loguru import logger
-from knowledge_retrieval.tool_manager import ToolManager
+from utils.tool_manager import ToolManager
 from knowledge_retrieval import ai_tools
 from typing import Optional, Dict, List, Any
-
+from utils.prompt_loader import load_prompt
+from utils.json_utils import fix_json_string
 
 
 class DeepAgentRag:
@@ -33,7 +34,7 @@ class DeepAgentRag:
         self.model = self.settings.llm_model
         self.MAX_TOOL_STEPS = 10
         self.tool_manager = ToolManager()
-        self.system_prompt = ai_tools.load_system_prompt()
+        self.system_prompt = load_prompt(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'prompts/deep_agent_rag_system_prompt.md'))
         self._register_all_tools()
 
     def _register_all_tools(self):
@@ -106,7 +107,18 @@ class DeepAgentRag:
                     "arguments": json.loads(tool_call.function.arguments)
                 })
             except json.JSONDecodeError:
-                logger.error(f"工具参数解析失败：{tool_call.function.arguments}")
+                # 尝试修复常见的 JSON 格式问题
+                raw_args = tool_call.function.arguments
+                logger.warning(f"工具参数 JSON 解析失败，尝试修复: {raw_args[:200]}")
+                try:
+                    fixed_args = fix_json_string(raw_args)
+                    parsed_calls.append({
+                        "id": tool_call.id,
+                        "name": tool_call.function.name,
+                        "arguments": json.loads(fixed_args)
+                    })
+                except Exception as e2:
+                    logger.error(f"工具参数解析失败: {raw_args}, 修复后仍失败: {e2}")
         return parsed_calls if parsed_calls else None
 
     async def _process_single_query(self, query: str, request_id: str = None) -> str:
@@ -121,7 +133,6 @@ class DeepAgentRag:
 
         while step < self.MAX_TOOL_STEPS:
             step += 1
-            logger.info(f"query：{query[:20]}... 第 {step}/{self.MAX_TOOL_STEPS} 轮工具调用")
 
             try:
                 response = await self.openai_client.chat.completions.create(
@@ -143,23 +154,40 @@ class DeepAgentRag:
             if not tool_calls:
                 answer = assistant_msg.content or "无有效回答"
                 return answer
+            else:
+                logger.info(f"query：{query[:20]}... 第 {step}/{self.MAX_TOOL_STEPS} 轮工具调用")
+
 
             # 有工具调用，执行工具并追加上下文
             messages.append(assistant_msg)
             tool_results = await self._execute_tools(tool_calls, request_id)
             messages.extend(tool_results)
 
-        logger.warning(f"查询【{query}】超过{self.MAX_TOOL_STEPS}轮，强制结束")
-        return "请基于你自身知识回答。"
+        logger.warning(f"查询【{query}】超过{self.MAX_TOOL_STEPS}轮，强制结束，基于已收集信息生成答案")
+
+        # 超过轮数限制，让大模型基于已收集的上下文生成答案
+        messages.append({
+            "role": "user",
+            "content": "已超过工具调用轮数限制。请基于你目前已经收集到的信息，尽可能回答用户的问题。如果信息不足，请说明并提供你已知的部分信息。"
+        })
+
+        try:
+            response = await self.openai_client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.3
+            )
+            final_answer = response.choices[0].message.content or "抱歉，基于已收集的信息无法给出完整答案。"
+            return final_answer
+        except Exception as e:
+            logger.error(f"生成最终答案失败：{str(e)}")
+            return "抱歉，系统处理超时，请稍后重试。"
 
     async def run_batch(self, query_list: List[str], request_id: str = None) -> List[str]:
         """
-        批量处理多个query
-        返回答案列表，顺序一一对应
-
-        Args:
-            query_list: 查询列表
-            request_id: 请求ID，用于追踪检索元数据
+        批量处理多个query,返回答案列表，顺序一一对应
+        query_list: 查询列表
+        request_id: 请求ID，用于追踪检索元数据
         """
         if not query_list:
             logger.warning("query_list 为空")
