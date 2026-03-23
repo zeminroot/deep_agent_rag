@@ -48,12 +48,8 @@ class FileDownloader:
     def download_file(self, url: str) -> Optional[str]:
         """
         下载文件到本地临时目录
-
-        Args:
-            url: 文件URL
-
-        Returns:
-            本地临时文件路径，下载失败返回None
+        url: 文件URL
+        返回本地临时文件路径，下载失败返回None
         """
         try:
             logger.info(f"开始下载文件: {url}")

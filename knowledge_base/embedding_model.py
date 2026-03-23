@@ -32,9 +32,7 @@ class EmbeddingModel:
     def _download_model(self) -> str:
         """
         使用 ModelScope 下载模型到本地
-
-        Returns:
-            本地模型下载路径
+        返回本地模型下载路径
         """
         try:
             logger.info(f"使用 ModelScope 下载模型: {self.model_name}")
@@ -70,7 +68,7 @@ class EmbeddingModel:
     def encode(
         self,
         text: Union[str, List[str]],
-        max_length: int = 8192
+        max_length: int = 1000
     ) -> List[List[float]]:
         try:
             if isinstance(text, str):
@@ -78,7 +76,7 @@ class EmbeddingModel:
 
             result = self.model.encode(
                 text,
-                batch_size=len(text),
+                batch_size=2,
                 max_length=max_length
             )
 

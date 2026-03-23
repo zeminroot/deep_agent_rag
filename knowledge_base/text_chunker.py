@@ -28,10 +28,8 @@ class DocumentTextChunker:
     ):
         """
         初始化切分器参数
-
-        Args:
-            chunk_size: 切分块的字符长度（默认1000）
-            chunk_overlap: 块之间的重叠字符长度（避免语义断裂，默认100）
+        chunk_size: 切分块的字符长度（默认1000）
+        chunk_overlap: 块之间的重叠字符长度（避免语义断裂，默认100）
         """
         self.settings = get_settings()
         self.chunk_size = chunk_size
@@ -64,22 +62,18 @@ class DocumentTextChunker:
     ) -> List[Dict[str, Any]]:
         """
         对页面直接进行多模式切分
-
-        Args:
-            pages: 页面列表[{page_index, text}, {page_index, text}]
-            split_mode: 切分模式：
-                - "recursive"：RecursiveCharacterTextSplitter 通用字符切分
-                - "markdown_header"：MarkdownHeaderTextSplitter 按标题切分
-                - "markdown_then_recursive"：先按标题切分再递归字符切分
-                - "markdown_ast"：使用AST语法分析树进行Markdown文本切分（最大保留文本块语义完整性）
-
-        Returns:
-            切分后的块列表，每个块包含文本、块索引、所在页面索引
-            [{
-                "chunk_index": 0,
-                "text": "文本内容",
-                "page_index": 0
-            }]
+        pages: 页面列表[{page_index, text}, {page_index, text}]
+        split_mode: 切分模式：
+            - "recursive"：RecursiveCharacterTextSplitter 通用字符切分
+            - "markdown_header"：MarkdownHeaderTextSplitter 按标题切分
+            - "markdown_then_recursive"：先按标题切分再递归字符切分
+            - "markdown_ast"：使用AST语法分析树进行Markdown文本切分（最大保留文本块语义完整性）
+        返回切分后的块列表，每个块包含文本、块索引、所在页面索引
+        [{
+            "chunk_index": 0,
+            "text": "文本内容",
+            "page_index": 0
+        }]
         """
         split_chunks = []
 
@@ -121,7 +115,6 @@ class DocumentTextChunker:
                     doc_text = md_header_doc.page_content if md_header_doc.page_content else ""
                     sub_chunks = self.recursive_splitter.split_text(doc_text)
 
-                    # 封装每个子 chunk
                     for sub_chunk in sub_chunks:
                         split_chunks.append({
                             "chunk_index": file_chunks_num+len(split_chunks),
