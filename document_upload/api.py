@@ -6,7 +6,6 @@
 @Desc    :   文件上传API路由, 调用路由接口，将文件上传到OSS并记录到MySQL
 '''
 
-
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -122,7 +122,6 @@ def get_oss_service() -> OSSService:
 
 
 if __name__ == '__main__':
-    # 测试上传
     import time
     service = get_oss_service()
 

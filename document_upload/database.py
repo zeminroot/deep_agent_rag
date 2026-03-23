@@ -19,32 +19,31 @@ from config.config import get_settings
 
 settings = get_settings()
 
-# 创建基类，所有 ORM 模型都继承自此
 Base = declarative_base()
 
 # 创建异步数据库引擎
 engine = create_async_engine(
     settings.database_url,
-    echo=False,  # 是否打印 SQL 语句
-    pool_size=10,  # 连接池大小
-    max_overflow=20,  # 连接池最大溢出连接数
-    pool_pre_ping=True,  # 检查连接是否有效
-    pool_recycle=3600,  # 连接回收时间（秒）
+    echo=False,  
+    pool_size=10,  
+    max_overflow=20,  
+    pool_pre_ping=True,  
+    pool_recycle=3600,  
 )
 
-# 创建异步会话工厂 Session 用于执行数据库操作
+# 创建异步会话工厂 Session 
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
-    expire_on_commit=False,  # 提交后不过期对象，方便访问
-    autocommit=False,  # 不自动提交
-    autoflush=False,  # 不自动刷新
+    expire_on_commit=False,  
+    autocommit=False,  
+    autoflush=False
 )
 
 
 async def get_db():
     """
-    获取数据库会话对象（依赖注入）
+    获取数据库会话对象
     """
     async with AsyncSessionLocal() as session:
         try:
