@@ -10,10 +10,9 @@
 ---
 
 ### 问答效果
-![](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/test_qa_image1.png)
-![Deep Agent RAG对话效果（非思考模式）](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/test_qa_image2.png)
-![豆包对话效果（非思考模式）](https://gitee.com/jockerzeming/deep_agent_rag/blob/master/images/doubao_testqa1.png)
-![https://gitee.com/jockerzeming/deep_agent_rag/blob/master/images/ori_ppt.png](知识库文件定位)
+![Deep Agent RAG对话效果（非思考模式）](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/test_qa_image1.png)
+![豆包对话效果（非思考模式）](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/doubao_testqa1.png)
+![知识库文件定位](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/ori_ppt.png)
 
 
 
