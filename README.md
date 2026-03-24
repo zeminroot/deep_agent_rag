@@ -1,11 +1,21 @@
 # 企业级通用 Deep Agent RAG 
 
-让大模型像人类研究员一样主动思考翻页查询资料进行内部知识库检索。支持垂直领域知识库自动化效果评估。
+让大模型像人类研究员一样主动思考翻页查询资料进行内部知识库检索。支持垂直领域知识库自动化效果评估。支持图表、公式、表格等知识检索。
 
 ---
 
 **核心思想：react+deepsearch**
 让大模型根据初步检索得到的文本片段信息，判断重点阅读哪些文件的哪些页面(file_id, page_index)，阅读重点页面内容后判断是继续生成新的检索serp执行检索或是定位到新的重点页面(file_id, page_index)。文本块检索和重点页面获取作为大模型的两个工具，让模型根据环境结果自主决策、不断迭代上述流程，直到信息足够支持回答用户query。
+
+---
+
+### 问答效果
+![](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/test_qa_image1.png)
+![Deep Agent RAG对话效果（非思考模式）](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/test_qa_image2.png)
+![豆包对话效果（非思考模式）](https://gitee.com/jockerzeming/deep_agent_rag/blob/master/images/doubao_testqa1.png)
+![https://gitee.com/jockerzeming/deep_agent_rag/blob/master/images/ori_ppt.png](知识库文件定位)
+
+
 
 ---
 
