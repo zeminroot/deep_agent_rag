@@ -15,16 +15,14 @@
 
 ### 二、问答效果
 **Deep Agent RAG（非思考模式）对话效果如下**
-![](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/test_qa_image1.png)
+![](./images/test_qa_image1.png)
 
 **豆包（非思考模式）对话效果如下**
-![](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/doubao_testqa1.png)
-
-
+![](./images/doubao_testqa1.png)
 
 **知识库文件定位**
 
-![](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/ori_ppt.png)
+![](./images/ori_ppt.png)
 
 
 
@@ -84,7 +82,7 @@ BAAI/bge-m3
 
 
 #### 3.3 上下文重排模型
-rerank部分使用 上下文重排模型 jina-reranker-v3。
+rerank部分使用 上下文重排模型 
 
 为什么使用上下文重排模型？
 
