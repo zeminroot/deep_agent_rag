@@ -23,6 +23,7 @@
 
 
 **知识库文件定位**
+
 ![](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/ori_ppt.png)
 
 
