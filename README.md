@@ -20,8 +20,9 @@
 **豆包（非思考模式）对话效果如下**
 ![豆包对话效果（非思考模式）](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/doubao_testqa1.png)
 
+
 **知识库文件定位**
-![知识库文件定位](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/ori_ppt.png)
+![](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/ori_ppt.png)
 
 
 **对比效果分析：**
