@@ -4,7 +4,7 @@
 
 ---
 
-**核心思想：react+deepsearch**
+### 核心思想：react+deepsearch
 
 主 Agent 与 子Agent 上下文天然隔离，主Agent在调用子Agent前自适应实现指代消解/省略恢复/改写过程。
 
@@ -15,23 +15,27 @@
 
 ### 问答效果
 **Deep Agent RAG（非思考模式）对话效果如下**
-![Deep Agent RAG对话效果（非思考模式）](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/test_qa_image1.png)
+![](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/test_qa_image1.png)
 
 **豆包（非思考模式）对话效果如下**
-![豆包对话效果（非思考模式）](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/doubao_testqa1.png)
+![](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/doubao_testqa1.png)
+
 
 
 **知识库文件定位**
 ![](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/ori_ppt.png)
 
 
+
 **对比效果分析：**
+
 Deep Agent RAG在定位到图表文本块后主动查阅所在PPT页，得到以现价美元为标准的GDP信息，后主动查阅第7页PPT得到以购买力为标准的GDP信息，值得惊喜的是：第7页PPT的第二个图表数据错误，但第一个图表正确，鉴于现价美元PPT页面的数据信息，子Agent自动忽略了错误信息，以第一个图表中的数据为准生成答案。
 
 豆包关于日本GDP数据的回答与Deep Agent RAG略有出入，源于豆包参考数据源与 Deep Agent RAG内部数据源 原始数据的出入。
 
 ---
 
+### 技术架构
 ### 1. 文件上传模块：
 异步文件上传接口 oss+mysql 存储原始文件信息。
 
@@ -64,7 +68,7 @@ BAAI/bge-m3
 知识检索支持两种模式的知识检索：（1）React+deepsearch Agent模式（2）二次上下文重排+上下文扩展。
 
 #### 3.1 React+deepsearch Agent主动检索模式
-让大模型根据初步检索得到的文本片段信息，判断重点阅读哪些文件的哪些页面(file_id, page_index)，阅读重点页面内容后判断是继续生成新的检索serp执行检索或是定位到新的重点页面(file_id, page_index)。文本块检索和重点页面获取作为大模型的两个工具，让模型根据环境结果自主决策、不断迭代上述流程，直到信息足够支持回答用户query。
+让模型根据初步检索得到的文本片段信息，判断重点阅读哪些文件的哪些页面(file_id, page_index)，阅读重点页面内容后判断是继续生成新的检索serp执行检索或是定位到新的重点页面(file_id, page_index)。文本块检索和重点页面获取作为模型的两个工具，让模型根据环境结果自主决策、不断迭代上述流程，直到信息足够支持回答用户query。
 
 给大模型接入两个工具：`快速检索召回文本块`、`获取重点阅读文本页`\
 信息检索工具：初次检索召回top20->上下文各扩展1个文本块->上下文重排获取top10 扩展后的文本块\
