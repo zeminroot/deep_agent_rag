@@ -18,7 +18,10 @@ from loguru import logger
 from openai import AsyncOpenAI
 from redis.asyncio import Redis as AsyncRedis
 from utils.tool_manager import ToolManager
-from main_agent import main_agent_tools as main_tools
+try:
+    from main_agent import main_agent_tools as main_tools
+except ImportError:
+    import main_agent_tools as main_tools
 from utils.prompt_loader import load_prompt
 from utils.json_utils import fix_json_string
 from datetime import datetime
@@ -32,7 +35,7 @@ class MainAgent:
             base_url=self.settings.llm_base_url,
         )
         self.model = self.settings.llm_model
-        self.MAX_TOOL_STEPS = 1
+        self.MAX_TOOL_STEPS = 2
         self.MAX_HISTORY_ROUNDS = 20  # 滑动窗口保留最近20轮qa
 
         # 初始化 Redis 客户端
@@ -244,12 +247,17 @@ class MainAgent:
             step += 1
 
             try:
+                logger.info(f"\nmain_agent中的messages：\n{messages}")
+                # 第一次调用强制使用知识库工具
+                if step == 1:
+                    tool_choice = {"type": "function", "function": {"name": "knowledge_retrieval_tool"}}
+                else:
+                    tool_choice = "auto"  
                 response = await self.openai_client.chat.completions.create(
                     model=self.model,
                     messages=messages,
                     tools=await self.tool_manager.get_openai_tools(),
-                    # tool_choice="auto",  # 大模型自动选择是否检索内部知识库
-                    tool_choice={"type": "function", "function": {"name": "knowledge_retrieval_tool"}}  # 强制大模型检索内部知识库
+                    tool_choice=tool_choice
                 )
             except Exception as e:
                 err = f"大模型调用失败：{str(e)}"
@@ -275,6 +283,7 @@ class MainAgent:
             # 有工具调用: 追加上下文、执行工具、将工具结果追加到上下文
             messages.append(assistant_msg)
             tool_results = await self._execute_tools(tool_calls, request_id)
+            logger.info(f"\nmain_agent工具调用结果：\n{tool_results}")
             messages.extend(tool_results)
         else:
             # 本次提问超过最大工具调用轮次，让大模型基于已有工具结果直接回答
@@ -312,27 +321,52 @@ class MainAgent:
 
 if __name__ == "__main__":
     import asyncio
+    from datetime import datetime
 
     async def test():
         agent = MainAgent()
-        user_id = "test_user3"
-        session_id = "test_session3"
+        user_id = "test_user"+uuid.uuid4().hex
+        session_id = "test_session"+uuid.uuid4().hex
         queries = [
-            "查阅知识库回答什么是特里芬难题",
-            "有解决途径吗"
+            "2020-2024年中国GDP在全球占比情况？",
+            "日本呢？"
         ]
+
+        # 创建Markdown文档
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        md_filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), f'test_conversation_{timestamp}.md')
+        md_lines = [
+            "# 对话效果\n",
+            "---\n"
+        ]
+
         print("=" * 60)
 
         for idx, query in enumerate(queries):
             print(f"\n--- 第 {idx+1} 轮对话 ---")
-            print(f"问题: {query}")
+            print(f"问题: {query}\n")
 
             answer = await agent.process_single_query(
                 user_id=user_id,
                 session_id=session_id,
                 query=query
             )
-            print(f"回答: {answer}\n")
+            answer_text = answer["answer"]
+            print(f"回答: {answer_text}\n")
 
+            # 追加到Markdown文档
+            md_lines.extend([
+                f"\n## 第 {idx+1} 轮对话\n",
+                "### 用户问题\n",
+                f"{query}\n\n",
+                "### Agent回答\n",
+                f"{answer_text}\n",
+                "---\n"
+            ])
+
+        # 写入Markdown文件
+        with open(md_filename, "w", encoding="utf-8") as f:
+            f.writelines(md_lines)
+        print(f"\n对话记录已保存到: {md_filename}")
 
     asyncio.run(test())

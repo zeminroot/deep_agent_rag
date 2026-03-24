@@ -4,7 +4,7 @@
 
 ---
 
-### 核心思想：react+deepsearch
+### 一、核心思想：react+deepsearch
 
 主 Agent 与 子Agent 上下文天然隔离，主Agent在调用子Agent前自适应实现指代消解/省略恢复/改写过程。
 
@@ -13,7 +13,7 @@
 
 ---
 
-### 问答效果
+### 二、问答效果
 **Deep Agent RAG（非思考模式）对话效果如下**
 ![](https://gitee.com/jockerzeming/deep_agent_rag/raw/master/images/test_qa_image1.png)
 
@@ -36,7 +36,8 @@ Deep Agent RAG在定位到图表文本块后主动查阅所在PPT页，得到以
 
 ---
 
-### 技术架构
+### 三、技术架构
+
 ### 1. 文件上传模块：
 异步文件上传接口 oss+mysql 存储原始文件信息。
 
